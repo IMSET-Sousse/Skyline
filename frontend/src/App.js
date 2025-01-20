@@ -10,25 +10,25 @@ const App = () => {
   const [city, setCity] = useState("Paris");
   const [darkMode, setDarkMode] = useState(false);
 
-  // Fetch current weather and forecast data
-  useEffect(() => {
-    const getWeather = async () => {
-      try {
-        const response = await axios.get(`http://127.0.0.1:5000/weather?city=${city}`);
-        setWeatherData(response.data);
-      } catch (error) {
-        console.error("Error fetching weather:", error);
-      }
-    };
+      // Fetch current weather and forecast data
+      useEffect(() => {
+        const getWeather = async () => {
+          try {
+            const response = await axios.get(`http://127.0.0.1:5000/weather?city=${city}`);
+            setWeatherData(response.data);
+          } catch (error) {
+            console.error("Error fetching weather:", error);
+          }
+        };
 
-    const getForecast = async () => {
-      try {
-        const response = await axios.get(`http://127.0.0.1:5000/forecast?city=${city}`);
-        setForecastData(response.data.forecast); // Store forecast data
-      } catch (error) {
-        console.error("Error fetching forecast:", error);
-      }
-    };
+        const getForecast = async () => {
+          try {
+            const response = await axios.get(`http://127.0.0.1:5000/forecast?city=${city}`);
+            setForecastData(response.data.forecast); // Store forecast data
+          } catch (error) {
+            console.error("Error fetching forecast:", error);
+          }
+        };
 
     getWeather();
     getForecast();
