@@ -21,14 +21,14 @@ const App = () => {
           }
         };
 
-    const getForecast = async () => {
-      try {
-        const response = await axios.get(`http://127.0.0.1:5000/forecast?city=${city}`);
-        setForecastData(response.data.forecast); // Store forecast data
-      } catch (error) {
-        console.error("Error fetching forecast:", error);
-      }
-    };
+        const getForecast = async () => {
+          try {
+            const response = await axios.get(`http://127.0.0.1:5000/forecast?city=${city}`);
+            setForecastData(response.data.forecast); // Store forecast data
+          } catch (error) {
+            console.error("Error fetching forecast:", error);
+          }
+        };
 
     getWeather();
     getForecast();
