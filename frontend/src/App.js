@@ -10,7 +10,7 @@ const App = () => {
   const [city, setCity] = useState("Paris");
   const [darkMode, setDarkMode] = useState(false);
 
-  // Fetch current weather and forecast data
+      // Fetch current weather and forecast data
   useEffect(() => {
     const getWeather = async () => {
       try {
