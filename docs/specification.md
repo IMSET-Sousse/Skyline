@@ -76,10 +76,7 @@
   - Affichage dynamique des données météorologiques.
   -Intégration de bibliothèques comme recharts pour les graphiques.
 
-#### Database
 
-- **PostgreSQL**
-  -Stocker les recherches fréquentes pour améliorer les performances.
 
 ### Deployment
 
@@ -89,4 +86,3 @@ Linux Ubunto Server with:
 
 - Python 12
 - NodeJs 22 LTS
-- PostgreSQL 17 Server
