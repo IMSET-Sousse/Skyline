@@ -1,130 +1,94 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import moment from 'moment';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import MapComponent from './components/Map';
+import WeatherCard from './components/WeatherCard';
+import Forecast from './components/Forecast';
+import Navbar from './components/Navbar';
+import SearchBar from './components/SearchBar';
+import WindVisualization from './components/WindVisualization'; // Import WindVisualization
 import './App.css';
 
-const App = () => {
+function App() {
+  const [city, setCity] = useState('');
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
   const [weatherData, setWeatherData] = useState(null);
-  const [forecastData, setForecastData] = useState([]);
-  const [city, setCity] = useState("Paris");
+  const [forecastData, setForecastData] = useState(null);
+  const [error, setError] = useState('');
   const [darkMode, setDarkMode] = useState(false);
 
-      // Fetch current weather and forecast data
-      useEffect(() => {
-        const getWeather = async () => {
-          try {
-            const response = await axios.get(`http://127.0.0.1:5000/weather?city=${city}`);
-            setWeatherData(response.data);
-          } catch (error) {
-            console.error("Error fetching weather:", error);
-          }
-        };
+  useEffect(() => {
+    if (city) {
+      // Fetch latitude and longitude for the city
+      axios
+        .get(`http://api.openweathermap.org/data/2.5/weather?q=${city}&appid=cefb9d99cecdefb55752d197c9a8a54b`)
+        .then((response) => {
+          const { lat, lon } = response.data.coord;
+          setLatitude(lat);
+          setLongitude(lon);
+        })
+        .catch((err) => {
+          console.error(err);
+          setError('City not found or server error.');
+        });
 
-        const getForecast = async () => {
-          try {
-            const response = await axios.get(`http://127.0.0.1:5000/forecast?city=${city}`);
-            setForecastData(response.data.forecast); // Store forecast data
-          } catch (error) {
-            console.error("Error fetching forecast:", error);
-          }
-        };
+      // Fetch weather and forecast data
+      axios
+        .get(`http://127.0.0.1:5000/weather?city=${city}`)
+        .then((response) => {
+          setWeatherData(response.data);
+        })
+        .catch((err) => {
+          console.error(err);
+          setError('Error fetching weather data');
+        });
 
-    getWeather();
-    getForecast();
+      axios
+        .get(`http://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=cefb9d99cecdefb55752d197c9a8a54b&units=metric`)
+        .then((response) => {
+          setForecastData(response.data);
+        })
+        .catch((err) => {
+          console.error(err);
+          setError('Error fetching forecast data');
+        });
+    }
   }, [city]);
 
-  // Dark mode toggle
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
-
   return (
-    <div className={darkMode ? 'dark-mode' : ''}>
-      <h1>Weather App</h1>
-      
-      {/* Input for changing city */}
-      <input
-        type="text"
-        value={city}
-        onChange={(e) => setCity(e.target.value)}
-        placeholder="Enter city name"
-      />
-      <button onClick={() => setCity(city)}>Get Weather</button>
-      
-      {/* Weather Details */}
-      <h2>Weather in {city}</h2>
-      {
-  weatherData ? (
-    <div>
-      <h2>Current Weather</h2>
-      <img 
-        src={`http://openweathermap.org/img/wn/${weatherData.icon}.png`} 
-        alt="weather icon" 
-      />
-      <p>Temperature: {weatherData.temperature}°C</p>
-      <p>Humidity: {weatherData.humidity}%</p>
-      <p>Condition: {weatherData.description}</p>
-      <p>Wind Speed: {weatherData.wind_speed} m/s</p>
-      <p>Local Time: {weatherData.local_time}</p>
-    </div>
-  ) : (
-    <p>Loading current weather...</p>
-  )
-}
+    <div className={`App ${darkMode ? 'dark-mode' : ''}`}>
+      <Navbar setDarkMode={setDarkMode} darkMode={darkMode} />
+      <div className="image-banner">
+        <img src="/image/weather.png" alt="Weather Banner" />
+      </div>
 
-      {/* Weather Forecast */}
-      <h2>Weather Forecast</h2>
-      <div className="forecast-container">
-        {forecastData.length > 0 ? (
-          forecastData.map((day, index) => (
-            <div key={index} className="forecast-card">
-              <p>{moment.unix(day.datetime).format('dddd, MMM Do')}</p>
-              <img 
-                src={`http://openweathermap.org/img/wn/${day.icon}.png`} 
-                alt="weather icon" 
-              />
-              <p>Temperature: {day.temperature}°C</p>
-              <p>Condition: {day.description}</p>
-            </div>
-          ))
-        ) : (
-          <p>Loading forecast...</p>
+      <div className="container">
+        <div className='weather-wind'>
+        <SearchBar setCity={setCity} city={city} />
+        {error && <p className="error">{error}</p>}
+        {weatherData && <WeatherCard weatherData={weatherData}  />}
+       
+        
+        {/* Wind Visualization Card */}
+        {forecastData && (
+          <div className="card">
+            <h3>Wind Speed Visualization</h3>
+            <WindVisualization forecastData={forecastData} />
+          </div>
+        )}
+        </div>
+   {forecastData && <Forecast forecastData={forecastData} />}
+        {/* Integrate the MapComponent */}
+        {latitude && longitude && (
+          <MapComponent city={city} latitude={latitude} longitude={longitude} />
         )}
       </div>
 
-      {/* Wind and Precipitation Visualization */}
-      <WindVisualization />
-
-      {/* Dark Mode Toggle Button */}
-      <button onClick={toggleDarkMode}>Toggle Dark Mode</button>
+      <footer className="footer">
+        <p>Skyline@ All rights reserved.</p>
+      </footer>
     </div>
   );
-};
-
-// Wind Visualization Component
-const WindVisualization = () => {
-  const data = [
-    { time: '08:00', windSpeed: 10 },
-    { time: '10:00', windSpeed: 15 },
-    { time: '11:00', windSpeed: 12 },
-    { time: '12:00', windSpeed: 12 },
-    { time: '13:00', windSpeed: 12 },
-    { time: '14:00', windSpeed: 14 },
-    { time: '15:00', windSpeed: 14 },
-    { time: '16:00', windSpeed: 12 },
-  ];
-
-  return (
-    <LineChart width={600} height={200} data={data}>
-      <CartesianGrid strokeDasharray="3 3" />
-      <XAxis dataKey="time" />
-      <YAxis />
-      <Tooltip />
-      <Legend />
-      <Line type="monotone" dataKey="windSpeed" stroke="#8884d8" />
-    </LineChart>
-  );
-};
+}
 
 export default App;

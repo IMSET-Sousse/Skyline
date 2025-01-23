@@ -1,59 +1,87 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 import requests
-import os
+from datetime import datetime, timedelta
+from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # Enable CORS for all routes
 
-# OpenWeatherMap API key
-API_KEY = "cefb9d99cecdefb55752d197c9a8a54b"  # Replace with your key
+WEATHER_API_KEY = 'cefb9d99cecdefb55752d197c9a8a54b'
+WEATHER_API_URL = "http://api.openweathermap.org/data/2.5/weather"
+FORECAST_API_URL = "http://api.openweathermap.org/data/2.5/forecast"
 
 @app.route('/weather', methods=['GET'])
 def get_weather():
-    city = request.args.get('city', 'London')  # Default city is London
-    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric"
-    response = requests.get(url)
+    city = request.args.get('city', '')
+    if not city:
+        return jsonify({'error': 'City parameter is required'}), 400
 
-    if response.status_code != 200:
-        return jsonify({"error": "City not found or API request failed"}), response.status_code
+    try:
+        weather_response = requests.get(
+            WEATHER_API_URL,
+            params={'q': city, 'appid': WEATHER_API_KEY, 'units': 'metric'}
+        )
+        weather_response.raise_for_status()
+        weather_data = weather_response.json()
 
-    data = response.json()
-    return jsonify({
-        "city": data["name"],
-        "temperature": data["main"]["temp"],
-        "description": data["weather"][0]["description"],
-        "humidity": data["main"]["humidity"],
-        "wind_speed": data["wind"]["speed"],
-        "icon": data["weather"][0]["icon"]
-    })
+        city_name = weather_data['name']
+        temp = weather_data['main']['temp']
+        humidity = weather_data['main']['humidity']
+        wind_speed = weather_data['wind']['speed']
+        condition = weather_data['weather'][0]['description']
+        city_timezone_offset = weather_data['timezone']
+        utc_time = datetime.utcnow()
+        local_time = utc_time + timedelta(seconds=city_timezone_offset)
+        formatted_local_time = local_time.strftime('%Y-%m-%d %H:%M:%S')
+        wind_degree = weather_data['wind'].get('deg', 0)  # Default to 0 if missing
+
+        return jsonify({
+            'city_name': city_name,
+            'current': {
+                'temp': temp,
+                'humidity': humidity,
+                'condition': condition,
+                'local_time': formatted_local_time,
+                'wind_speed': wind_speed * 3.6,
+                'wind_degree': wind_degree 
+            }
+        })
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error fetching weather data: {e}")
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/forecast', methods=['GET'])
 def get_forecast():
-    city = request.args.get('city')
+    city = request.args.get('city', '')
     if not city:
-        return jsonify({"error": "City not provided"}), 400
+        return jsonify({'error': 'City parameter is required'}), 400
 
-    url = f"http://api.openweathermap.org/data/2.5/forecast?q={city}&appid={API_KEY}&units=metric"
-    response = requests.get(url)
+    try:
+        forecast_response = requests.get(
+            FORECAST_API_URL,
+            params={'q': city, 'appid': WEATHER_API_KEY, 'units': 'metric'}
+        )
+        forecast_response.raise_for_status()
+        forecast_data = forecast_response.json()
 
-    if response.status_code != 200:
-        return jsonify({"error": "City not found or API request failed"}), response.status_code
+        forecast = [
+            {
+                'date': datetime.utcfromtimestamp(item['dt']).strftime('%Y-%m-%d'),
+                'temp': item['main']['temp'],
+                'humidity': item['main']['humidity'],
+                'condition': item['weather'][0]['description'],
+                'wind_speed': item['wind']['speed'] * 3.6,
+                'wind_degree': item['wind'].get('deg', 0) 
+            }
+            for item in forecast_data['list'][::8]
+        ]
 
-    data = response.json()
-    forecast = []
-    for entry in data['list']:
-        forecast.append({
-            "datetime": entry['dt'],
-            "temperature": entry['main']['temp'],
-            "description": entry['weather'][0]['description'],
-            "icon": entry['weather'][0]['icon']
-        })
+        return jsonify({'forecast': forecast})
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error fetching forecast data: {e}")
+        return jsonify({'error': str(e)}), 500
 
-    return jsonify({
-        "city": data['city']['name'],
-        "forecast": forecast
-    })
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
