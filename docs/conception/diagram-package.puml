@@ -3,44 +3,25 @@ skinparam packageStyle rectangle
 
 package "Skyline" {
     package "Frontend" {
-        class "WeatherComponent" {
-            +inputCity(): void
-            +displayWeather(): void
-            +displayForecast(): void
-        }
-        class "DarkModeToggle" {
-            +enableDarkMode(): void
-            +disableDarkMode(): void
-        }
-        class "VisualizationComponent" {
-            +renderGraph(data: List<DataPoint>): void
-        }
+        [Weather Input] : Allows user to input city
+        [Weather Display] : Displays current weather
+        [Forecast Display] : Displays weather forecast
+        [Dark Mode Toggle] : Toggles between dark and light modes
+        [Graph Visualization] : Renders wind/temperature graphs
     }
 
     package "Backend" {
-        class "WeatherAPI" {
-            +getCurrentWeather(city: String): JSON
-            +getForecast(city: String): JSON
-        }
-        class "ForecastDataProcessor" {
-            +processForecastData(rawData: JSON): List<Forecast>
-        }
+        [Weather Fetcher] : Retrieves weather data from API
+        [Forecast Processor] : Processes forecast data
     }
 
-    package "Utilities" {
-        class "DataParser" {
-            +parseWeatherData(rawData: JSON): WeatherData
-            +parseForecastData(rawData: JSON): List<Forecast>
-        }
-    }
 }
 
 ' Relationships
-WeatherComponent --> WeatherAPI : Fetches Data
-WeatherAPI --> DataParser : Passes Raw Data
-DataParser --> WeatherComponent : Returns Processed Data
-WeatherAPI --> ForecastDataProcessor : Processes Forecast Data
-ForecastDataProcessor --> WeatherComponent : Returns Forecast
-WeatherComponent --> VisualizationComponent : Sends Data for Visualization
-WeatherComponent --> DarkModeToggle : Toggles Theme
+[Weather Input] --> [Weather Fetcher] : Sends user input
+[Weather Fetcher] --> [Data Parser] : Passes raw API data
+[Data Parser] --> [Weather Display] : Provides processed weather data
+[Data Parser] --> [Forecast Display] : Provides processed forecast data
+[Weather Display] --> [Graph Visualization] : Sends data for visualization
+[Dark Mode Toggle] --> [Weather Display] : Adjusts display settings
 @enduml

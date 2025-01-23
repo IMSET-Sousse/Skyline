@@ -1,4 +1,7 @@
-# Specification
+## Specification
+# Skyline
+## Decription 
+L'application Skyline Weather est une application web intuitive et réactive qui fournit des mises à jour météorologiques en temps réel, des prévisions et des visualisations de données. Conçue pour être simple et interactive, elle permet aux utilisateurs d'accéder rapidement aux informations nécessaires, avec une fonctionnalité de mode sombre pour une meilleure expérience visuelle.
 
 ## Étude des concurrents existants
 
@@ -80,7 +83,7 @@
 
 ### Deployment
 
-![Deployment Diagram](conception/deploiment.png)
+![Deployment Diagram](conception/deploiment.png) 
 
 Linux Ubunto Server with:
 
